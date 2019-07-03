@@ -8,8 +8,10 @@ import java.util.*;
 */
 public class Solution {
   public static void main(String[] args) throws IOException {
+    if (args.length == 0)
+      return;
     File resultFileAbsolutePath = new File(args[1]);
-    if (FileUtils.isExist(resultFileAbsolutePath)) {
+    if (FileUtils.isExist(resultFileAbsolutePath) && !"allFilesContent.txt".equals(resultFileAbsolutePath.getName())) {
       FileUtils.renameFile(resultFileAbsolutePath, new File(resultFileAbsolutePath.getParent() + "/allFilesContent.txt"));
     }
 
@@ -20,11 +22,13 @@ public class Solution {
     OutputStream outputStream = new FileOutputStream(resultFileAbsolutePath);
     InputStream inputStream;
     for (File file : files) {
-      inputStream = new FileInputStream(file);
-      while (inputStream.available() > 0) {
-        outputStream.write(inputStream.read());
+      if (file.isFile()) {
+        inputStream = new FileInputStream(file);
+        while (inputStream.available() > 0) {
+          outputStream.write(inputStream.read());
+        }
+        new PrintWriter(outputStream).print("\n");
       }
-      outputStream.write(10);
     }
 
     outputStream.close();
@@ -33,10 +37,10 @@ public class Solution {
   private static List<File> getFileListingNoSort(File startingDir) {
     List<File> result = new ArrayList<>();
     File[] filesAndDirs = startingDir.listFiles();
-    List<File> filesDirs = Arrays.asList(filesAndDirs);
-    for (File file : filesDirs) {
+    assert filesAndDirs != null;
+    for (File file : filesAndDirs) {
       if (file.length() < 50)
-        result.add(file); //always add, even if directory
+        result.add(file);
       if (!file.isFile()) {
         //must be a directory
         //recursive call!
