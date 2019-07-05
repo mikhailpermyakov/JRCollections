@@ -11,36 +11,50 @@ import java.util.List;
 
 public class SearchFileVisitor extends SimpleFileVisitor<Path> {
 
-    String partOfName;
-    String partOfContent;
-    int minSize;
-    int maxSize;
-    List<Path> foundFiles = new ArrayList<>();
+  private String partOfName;
+  private String partOfContent;
+  private int minSize = -1;
+  private int maxSize = -1;
+  private List<Path> foundFiles = new ArrayList<>();
 
-    @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        byte[] content = Files.readAllBytes(file); // размер файла: content.length
+  @Override
+  public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+    byte[] content = Files.readAllBytes(file); // размер файла: content.length
+    List<String> contentList = Files.readAllLines(file);
+    if ((null != partOfName && file.getFileName().toString().contains(partOfName)) ||
+        (null != partOfContent && _contains(contentList, partOfContent)) ||
+        (minSize > -1 && content.length > minSize) ||
+        (maxSize > -1 && content.length < maxSize))
+      foundFiles.add(file);
+    return super.visitFile(file, attrs);
+  }
 
-        return super.visitFile(file, attrs);
+  void setPartOfName(String partOfName) {
+    this.partOfName = partOfName;
+  }
+
+  void setPartOfContent(String partOfContent) {
+    this.partOfContent = partOfContent;
+  }
+
+  void setMinSize(int minSize) {
+    this.minSize = minSize;
+  }
+
+  void setMaxSize(int maxSize) {
+    this.maxSize = maxSize;
+  }
+
+  List<Path> getFoundFiles() {
+    return foundFiles;
+  }
+
+  private boolean _contains(List<String> contentList, String part) {
+    for (String content : contentList) {
+      if (content.contains(part)) {
+        return true;
+      }
     }
-
-    public void setPartOfName(String partOfName) {
-        this.partOfName = partOfName;
-    }
-
-    public void setPartOfContent(String partOfContent) {
-        this.partOfContent = partOfContent;
-    }
-
-    public void setMinSize(int minSize) {
-        this.minSize = minSize;
-    }
-
-    public void setMaxSize(int maxSize) {
-        this.maxSize = maxSize;
-    }
-
-    public List<Path> getFoundFiles() {
-        return null;
-    }
+    return false;
+  }
 }
