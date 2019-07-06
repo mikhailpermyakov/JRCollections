@@ -11,8 +11,8 @@ import java.util.List;
 
 public class SearchFileVisitor extends SimpleFileVisitor<Path> {
 
-  private String partOfName;
-  private String partOfContent;
+  private String partOfName = null;
+  private String partOfContent = null;
   private int minSize = -1;
   private int maxSize = -1;
   private List<Path> foundFiles = new ArrayList<>();
@@ -21,11 +21,19 @@ public class SearchFileVisitor extends SimpleFileVisitor<Path> {
   public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
     byte[] content = Files.readAllBytes(file); // размер файла: content.length
     List<String> contentList = Files.readAllLines(file);
-    if ((null != partOfName && file.getFileName().toString().contains(partOfName)) ||
-        (null != partOfContent && _contains(contentList, partOfContent)) ||
-        (minSize > -1 && content.length > minSize) ||
-        (maxSize > -1 && content.length < maxSize))
-      foundFiles.add(file);
+    List<Boolean> conditions = new ArrayList<>();
+    if (null != partOfName)
+      conditions.add(file.getFileName().toString().contains(partOfName));
+    if (null != partOfContent)
+      conditions.add(_contains(contentList, partOfContent));
+    if (minSize > -1)
+      conditions.add(content.length > minSize);
+    if (maxSize > -1)
+      conditions.add(content.length < maxSize);
+    for (boolean condition : conditions)
+      if (!condition)
+        return super.visitFile(file, attrs);
+    foundFiles.add(file);
     return super.visitFile(file, attrs);
   }
 
