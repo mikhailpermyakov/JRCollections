@@ -7,20 +7,45 @@ import java.util.*;
 Построй дерево(1)
 */
 public class CustomTree extends AbstractList<String> implements Cloneable, Serializable {
-  
-  private Entry<String> root;
-  private Map<String, Entry<String>> tree;
-  
+
+  Entry<String> root = new Entry<>("0");
+  private Map<String, Entry<String>> tree = new LinkedHashMap<>();
+
   public CustomTree() {
-    root = new Entry<>("root");
-    tree = new LinkedHashMap<>();
-    tree.put("0", root);
+//    tree.put("0", root);
   }
-  
+
 
   @Override
   public boolean add(String element) {
-    return null == tree.put(element, new Entry<>(element));
+    Entry<String> newEntry = new Entry<>(element);
+    if (tree.size() == 0)
+      tree.put("0", root);
+    List<Entry<String>> nodes = new ArrayList<>();
+    //collect all nodes that isAvailableToAddChildren() first
+    tree.forEach((k, v) -> {
+      if (tree.get(k).isAvailableToAddChildren()) {
+        nodes.add(tree.get(k));
+      }
+    });
+    String custodianName = nodes.get(nodes.size() - 1).getElementName();
+    //now iterate through the nodes
+    //to find the lowest (by value)
+    for (Entry<String> entry : nodes) {
+      if (Integer.valueOf(entry.getElementName()) < Integer.valueOf(custodianName))
+        custodianName = entry.getElementName();
+    }
+
+    //set it as a parent
+    Entry<String> aCustodian = tree.get(custodianName);//the found parent
+    newEntry.setParent(aCustodian);
+    if (null == aCustodian.getLeftChild()) {//first check if left child is null
+      aCustodian.setLeftChild(newEntry);
+    } else if (null == aCustodian.getRightChild()) {
+      aCustodian.setRightChild(newEntry);//if not add new entry as a right child
+    }
+    tree.put(aCustodian.getElementName(), aCustodian);//update a parent
+    return null == tree.put(element, newEntry);
   }
 
   @Override
@@ -28,9 +53,9 @@ public class CustomTree extends AbstractList<String> implements Cloneable, Seria
     return tree.size() - 1;
   }
 
-  public String getParent(String s) {
+  String getParent(String s) {
     try {
-      return tree.get(s).getElementName();//todo
+      return tree.get(s).getParent().getElementName();
     } catch (NullPointerException e) {
       return null;
     }
@@ -71,13 +96,14 @@ public class CustomTree extends AbstractList<String> implements Cloneable, Seria
     String elementName;
 
     Entry<T> parent, leftChild, rightChild;
+
+    boolean availableToAddLeftChildren, availableToAddRightChildren;
+
     public Entry(String elementName) {
       this.elementName = elementName;
       availableToAddLeftChildren = true;
       availableToAddRightChildren = true;
     }
-
-    boolean availableToAddLeftChildren, availableToAddRightChildren;
 
     public Entry<T> getParent() {
       return parent;
@@ -97,6 +123,20 @@ public class CustomTree extends AbstractList<String> implements Cloneable, Seria
 
     public String getElementName() {
       return elementName;
+    }
+
+    public void setParent(Entry<T> parent) {
+      this.parent = parent;
+    }
+
+    public void setLeftChild(Entry<T> leftChild) {
+      this.leftChild = leftChild;
+      availableToAddLeftChildren = false;
+    }
+
+    public void setRightChild(Entry<T> rightChild) {
+      this.rightChild = rightChild;
+      availableToAddRightChildren = false;
     }
   }
 }
